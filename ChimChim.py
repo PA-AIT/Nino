@@ -1,3 +1,4 @@
+# Updated Python code
 import imaplib
 import email
 import pandas as pd
@@ -15,10 +16,11 @@ nltk.download('punkt')
 # Streamlit app title
 st.title("Automate2PDF: Simplified Data Transfer")
 
-# Create input fields for the user, password, and start date
+# Create input fields for the user, password, start date, and email address
 user = st.text_input("Enter your email address")
 password = st.text_input("Enter your email password", type="password")
 start_date = st.text_input("Enter the start date (YYYY-MM-DD) for PDF summarization")
+pdf_email_address = st.text_input("Enter the email address from which to extract PDFs")
 
 if st.button("Fetch and Display PDF Summaries"):
     try:
@@ -34,8 +36,8 @@ if st.button("Fetch and Display PDF Summaries"):
             my_mail.select('inbox')
 
             # Define the key and value for email search
-            key = 'SINCE'
-            value = start_date  # Use the user-specified start date to search
+            key = 'FROM'
+            value = pdf_email_address  # Use the user-specified email address to search
             _, data = my_mail.search(None, key, value)
 
             mail_id_list = data[0].split()
@@ -47,10 +49,13 @@ if st.button("Fetch and Display PDF Summaries"):
                 typ, data = my_mail.fetch(num, '(RFC822)')
                 msg = email.message_from_bytes(data[0][1])
 
+                # Extract email date
+                email_date = msg["Date"]
+
                 for part in msg.walk():
-                    if part.get_content_type() == 'application/pdf':
-                        # Extract email date
-                        email_date = msg["Date"]
+                    if part.get_content_type() == 'application/pdf' and email_date >= start_date:
+                        # Extract and add the received date
+                        date = msg["Date"]
 
                         # Extract text from PDF using PyMuPDF
                         pdf_bytes = part.get_payload(decode=True)
@@ -71,7 +76,7 @@ if st.button("Fetch and Display PDF Summaries"):
                             summary = summarizer(parser.document, 3)
                             summarized_text = ' '.join(str(sentence) for sentence in summary)
 
-                            info = {"Chapter": i + 1, "Summarized Chapter Content": summarized_text, "Received Date": email_date}
+                            info = {"Chapter": i + 1, "Summarized Chapter Content": summarized_text, "Received Date": date}
                             info_list.append(info)
 
             # Display the summarized content
