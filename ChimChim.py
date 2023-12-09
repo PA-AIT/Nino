@@ -1,4 +1,4 @@
-# Updated Python code
+# Import statements
 import imaplib
 import email
 import pandas as pd
@@ -15,6 +15,14 @@ nltk.download('punkt')
 
 # Streamlit app title
 st.title("Automate2PDF: Simplified Data Transfer")
+
+# Function to extract text from PDF using PyMuPDF
+def extract_text_from_pdf(pdf_bytes):
+    pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+    text = ""
+    for page_num in range(pdf_document.page_count):
+        text += pdf_document[page_num].get_text()
+    return text
 
 # Create input fields for the user, password, start date, and email address
 user = st.text_input("Enter your email address")
